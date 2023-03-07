@@ -16,5 +16,5 @@ var getMagicBlock = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(setupMPKS)
+	rootCmd.AddCommand(getMagicBlock)
 }

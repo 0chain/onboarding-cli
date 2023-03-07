@@ -16,5 +16,5 @@ var validateShares = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(setupMPKS)
+	rootCmd.AddCommand(validateShares)
 }
