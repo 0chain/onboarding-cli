@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"onboarding-cli/types"
+	"onboarding-cli/util"
 	"os"
 	"strconv"
 
@@ -37,12 +39,6 @@ var generateKeys = &cobra.Command{
 			log.Fatal("Signature Scheme can only take either bls0chain or ed25519")
 		}
 
-		var wallet *zcncrypto.Wallet
-		wallet, err = getWallet(clientSigScheme)
-		if err != nil {
-			panic(err)
-		}
-
 		var miners, sharders int
 
 		miners, err = flags.GetInt("miners")
@@ -59,27 +55,61 @@ var generateKeys = &cobra.Command{
 
 		minersData := "miners:\n"
 
+		minerNodes := []types.Miner{}
+
 		for i := 1; i <= miners; i++ {
-			minerData, err := generateNodeStructure(wallet, clientSigScheme, "miner", i)
+			var wallet *zcncrypto.Wallet
+			wallet, err = getWallet(clientSigScheme)
+			if err != nil {
+				panic(err)
+			}
+			minerNode, minerData, err := generateMinerNodeStructure(wallet, clientSigScheme, i)
 			if err != nil {
 				panic(err)
 			}
 			minersData += minerData
+			minerNodes = append(minerNodes, minerNode)
 		}
 
 		shardersData := "sharders:\n"
+		sharderNodes := []types.Sharder{}
+
+		var wallet *zcncrypto.Wallet
+		wallet, err = getWallet(clientSigScheme)
+		if err != nil {
+			panic(err)
+		}
 
 		for i := 1; i <= sharders; i++ {
-			sharderData, err := generateNodeStructure(wallet, clientSigScheme, "sharder", i)
+
+			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i)
 			if err != nil {
 				panic(err)
 			}
 			shardersData += sharderData
+			sharderNodes = append(sharderNodes, sharderNode)
 		}
 
 		endData := fmt.Sprintf("\nmessage: %s\nmagic_block_number: 1\nstarting_round: 0\nt_percent: 66\nk_percent: 75", "From CLI")
 
 		completedData := minersData + shardersData + endData
+
+		nodes := types.Nodes{
+			Miners:   minerNodes,
+			Sharders: sharderNodes,
+		}
+
+		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if err != nil {
+			panic(err)
+		}
+		postResponse, err := postReq.Post()
+		fmt.Println("Post Request Response", postResponse)
 
 		var saveFlag bool
 		saveFlag, err = flags.GetBool("save")
@@ -117,9 +147,11 @@ func getWallet(scheme string) (wallet *zcncrypto.Wallet, err error) {
 	return wallet, err
 }
 
-func generateNodeStructure(wallet *zcncrypto.Wallet, scheme, pathType string, number int) (details string, err error) {
+// TODO: refactor miner and sharder structures to a single function later
+// TODO: Need to map the return type which was causing some complications
+func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Miner, details string, err error) {
 	if len(wallet.Keys) < 0 {
-		return "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
+		return types.Miner{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
 
 	if scheme != "bls0chain" {
@@ -147,7 +179,7 @@ func generateNodeStructure(wallet *zcncrypto.Wallet, scheme, pathType string, nu
 
 	err = sk.DeserializeHexStr(privKey)
 	if err != nil {
-		return "", err
+		return types.Miner{}, "", err
 	}
 	sec := hex.EncodeToString(sk.GetLittleEndian())
 	pub := sk.GetPublicKey().SerializeToHexStr()
@@ -167,16 +199,90 @@ func generateNodeStructure(wallet *zcncrypto.Wallet, scheme, pathType string, nu
 	n2nIp := "localhost"
 	publicIp := "localhost"
 	port := "701" + setIndex
-	path := pathType + convertedIndex
+	path := "miner" + convertedIndex
 	description := ""
 
-	if pathType == "miner" {
-		nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
-	} else {
-		nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description)
+	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
+
+	node = types.Miner{
+		ID:          id,
+		N2NIp:       n2nIp,
+		PublicKey:   pub,
+		Port:        port,
+		PublicIp:    publicIp,
+		Path:        path,
+		Description: description,
+		SetIndex:    uint(number),
+	}
+	return node, nodeStructure, nil
+
+}
+
+func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Sharder, details string, err error) {
+	if len(wallet.Keys) < 0 {
+		return types.Sharder{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
 
-	return nodeStructure, nil
+	if scheme != "bls0chain" {
+		// TODO: Discuss what to write here
+		//b := bufio.NewWriter(w)
+
+		//if _, err = b.WriteString(fmt.Sprintf("%s\n", wallet.Keys[0].PublicKey)); err != nil {
+		//	return sec, pub, id, err
+		//}
+		//
+		//if _, err = b.WriteString(wallet.Keys[0].PrivateKey + "\n"); err != nil {
+		//	return sec, pub, id, err
+		//}
+		//
+		//if err = b.Flush(); err != nil {
+		//	return sec, pub, id, err
+		//}
+
+		return
+	}
+
+	privKey, _ := wallet.Keys[0].PrivateKey, wallet.Keys[0].PublicKey
+
+	var sk bls.SecretKey
+
+	err = sk.DeserializeHexStr(privKey)
+	if err != nil {
+		return types.Sharder{}, "", err
+	}
+	sec := hex.EncodeToString(sk.GetLittleEndian())
+	pub := sk.GetPublicKey().SerializeToHexStr()
+
+	decodeString, _ := hex.DecodeString(pub)
+	id := encryption.Hash(decodeString)
+
+	var nodeStructure string
+
+	convertedIndex := strconv.Itoa(number)
+	setIndex := convertedIndex
+
+	if number < 10 {
+		convertedIndex = "0" + convertedIndex
+	}
+
+	n2nIp := "localhost"
+	publicIp := "localhost"
+	port := "702" + setIndex
+	path := "sharder" + convertedIndex
+	description := ""
+
+	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description)
+
+	node = types.Sharder{
+		ID:          id,
+		N2NIp:       n2nIp,
+		PublicKey:   pub,
+		Port:        port,
+		PublicIp:    publicIp,
+		Path:        path,
+		Description: description,
+	}
+	return node, nodeStructure, nil
 
 }
 
