@@ -74,14 +74,12 @@ var generateKeys = &cobra.Command{
 		shardersData := "sharders:\n"
 		sharderNodes := []types.Sharder{}
 
-		var wallet *zcncrypto.Wallet
-		wallet, err = getWallet(clientSigScheme)
-		if err != nil {
-			panic(err)
-		}
-
 		for i := 1; i <= sharders; i++ {
-
+			var wallet *zcncrypto.Wallet
+			wallet, err = getWallet(clientSigScheme)
+			if err != nil {
+				panic(err)
+			}
 			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i)
 			if err != nil {
 				panic(err)
