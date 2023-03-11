@@ -25,3 +25,12 @@ type Nodes struct {
 	Miners   []Miner   `json:"miners"`
 	Sharders []Sharder `json:"sharders"`
 }
+
+type MPK struct {
+	ID  string   `json:"id"`
+	Mpk []string `json:"mpk"`
+}
+
+type Mpks struct {
+	Mpks map[string]*MPK `json:"mpks"`
+}
