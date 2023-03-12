@@ -25,3 +25,8 @@ type Nodes struct {
 	Miners   []Miner   `json:"miners"`
 	Sharders []Sharder `json:"sharders"`
 }
+
+type ShareData struct {
+	FromID string `json:"from_id"`
+	Share  string `json:"share"`
+}

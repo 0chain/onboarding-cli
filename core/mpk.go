@@ -47,7 +47,7 @@ func saveDKG(dkg map[string]any, index int) error {
 		return err
 	}
 
-	name := getSummariesName(index)
+	name := GetSummariesName(index)
 
 	path := fmt.Sprintf("output/%s", name)
 
@@ -58,6 +58,6 @@ func saveDKG(dkg map[string]any, index int) error {
 	return nil
 }
 
-func getSummariesName(index int) string {
+func GetSummariesName(index int) string {
 	return fmt.Sprintf("b0mnode%v_dkg.json", index+1)
 }
