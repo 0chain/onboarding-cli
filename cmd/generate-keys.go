@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"onboarding-cli/core"
 	"onboarding-cli/types"
 	"onboarding-cli/util"
 	"os"
@@ -17,6 +18,9 @@ import (
 	"github.com/herumi/bls-go-binary/bls"
 	"github.com/spf13/cobra"
 )
+
+var T = 3
+var N = 66
 
 var generateKeys = &cobra.Command{
 	Use:   "generate-keys",
@@ -52,6 +56,9 @@ var generateKeys = &cobra.Command{
 		}
 
 		file, err := os.OpenFile("nodes.yml", os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		minersData := "miners:\n"
 
@@ -107,6 +114,9 @@ var generateKeys = &cobra.Command{
 			panic(err)
 		}
 		postResponse, err := postReq.Post()
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println("Post Request Response", postResponse)
 
 		var saveFlag bool
@@ -148,7 +158,7 @@ func getWallet(scheme string) (wallet *zcncrypto.Wallet, err error) {
 // TODO: refactor miner and sharder structures to a single function later
 // TODO: Need to map the return type which was causing some complications
 func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Miner, details string, err error) {
-	if len(wallet.Keys) < 0 {
+	if len(wallet.Keys) == 0 {
 		return types.Miner{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
 
@@ -199,6 +209,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	port := "701" + setIndex
 	path := "miner" + convertedIndex
 	description := ""
+	_ = core.CreateMpk(T, N, number, id)
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
@@ -217,7 +228,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 }
 
 func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Sharder, details string, err error) {
-	if len(wallet.Keys) < 0 {
+	if len(wallet.Keys) == 0 {
 		return types.Sharder{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
 
