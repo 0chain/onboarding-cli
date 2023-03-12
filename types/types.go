@@ -1,5 +1,7 @@
 package types
 
+import "github.com/0chain/gosdk/core/common"
+
 type Miner struct {
 	ID          string `json:"id" gorm:"primary_key"`
 	N2NIp       string `json:"n2n_ip" gorm:"column:n2n_ip"`
@@ -33,4 +35,11 @@ type MPK struct {
 
 type Mpks struct {
 	Mpks map[string]*MPK `json:"mpks"`
+}
+
+// to store miners used for setting up mpks
+type MinerMpks struct {
+	Miner
+	CreationDate common.Timestamp `json:"creation_date"`
+	Type         string           `json:"type"`
 }
