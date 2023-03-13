@@ -8,7 +8,6 @@ import (
 	"log"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
-	"onboarding-cli/util"
 	"os"
 	"strconv"
 
@@ -99,25 +98,25 @@ var generateKeys = &cobra.Command{
 
 		completedData := minersData + shardersData + endData
 
-		nodes := types.Nodes{
-			Miners:   minerNodes,
-			Sharders: sharderNodes,
-		}
+		// nodes := types.Nodes{
+		// 	Miners:   minerNodes,
+		// 	Sharders: sharderNodes,
+		// }
 
-		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
+		// postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
 
-		if err != nil {
-			fmt.Println(err)
-		}
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
 
-		if err != nil {
-			panic(err)
-		}
-		postResponse, err := postReq.Post()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Post Request Response", postResponse)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// postResponse, err := postReq.Post()
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// fmt.Println("Post Request Response", postResponse)
 
 		var saveFlag bool
 		saveFlag, err = flags.GetBool("save")

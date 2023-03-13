@@ -10,11 +10,13 @@ import (
 	"github.com/herumi/bls-go-binary/bls"
 )
 
-func CreateShares(minerIds []string, setIndex int, currId string) map[string]*types.ShareData {
+// CreateShares take the miner ids and the current miner setIndex and  id and returns the shares for all other miners .
+
+func CreateShares(minerIds []string, setIndex int, currId string) []*types.ShareData {
 
 	name := GetSummariesName(setIndex)
 
-	mp := make(map[string]*types.ShareData)
+	shares := make([]*types.ShareData, 0)
 
 	path := fmt.Sprintf("output/%s", name)
 
@@ -51,16 +53,18 @@ func CreateShares(minerIds []string, setIndex int, currId string) map[string]*ty
 			log.Panic(err)
 		}
 
-		mp[id] = &types.ShareData{
-			Share:  share.GetHexString(),
-			FromID: currId,
+		shareData := &types.ShareData{
+			Share:     share.GetHexString(),
+			FromMiner: currId,
+			ToMiner:   id,
 		}
-
+		shares = append(shares, shareData)
 	}
 
-	return mp
+	return shares
 }
 
+// ComputeDKGKeyShare computes the share for a given miner PartyID using its own msk.
 func ComputeDKGKeyShare(msk []bls.SecretKey, forID PartyID) (Key, error) {
 	var secVec Key
 	err := secVec.Set(msk, &forID)

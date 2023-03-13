@@ -8,6 +8,7 @@ import (
 	"github.com/herumi/bls-go-binary/bls"
 )
 
+// SignMessages verifies the share and signs the share with the private key for every share sent to it by other miners
 func SignMessages(shares map[string]string, mpks map[string][]string, privKey string, currId string) map[string]string {
 
 	mp := make(map[string]string)
@@ -61,6 +62,7 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 	return mp
 }
 
+// ValidateShare verifies the share sent by other miners using their mpk and the PartyID of the local miner
 func ValidateShare(jpk []PublicKey, sij bls.SecretKey, id PartyID) bool {
 	var expectedSijPK PublicKey
 	if err := expectedSijPK.Set(jpk, &id); err != nil {
