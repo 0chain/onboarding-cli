@@ -8,6 +8,7 @@ import (
 	"log"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
+	"onboarding-cli/util"
 	"os"
 	"strconv"
 
@@ -94,41 +95,31 @@ var generateKeys = &cobra.Command{
 			sharderNodes = append(sharderNodes, sharderNode)
 		}
 
-		endData := fmt.Sprintf("\nmessage: %s\nmagic_block_number: 1\nstarting_round: 0\nt_percent: 66\nk_percent: 75", "From CLI")
+		completedData := minersData + shardersData
 
-		completedData := minersData + shardersData + endData
+		nodes := types.Nodes{
+			Miners:   minerNodes,
+			Sharders: sharderNodes,
+		}
 
-		// nodes := types.Nodes{
-		// 	Miners:   minerNodes,
-		// 	Sharders: sharderNodes,
-		// }
+		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
 
-		// postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
-
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// postResponse, err := postReq.Post()
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// fmt.Println("Post Request Response", postResponse)
-
-		var saveFlag bool
-		saveFlag, err = flags.GetBool("save")
+		if err != nil {
+			panic(err)
+		}
+		postResponse, err := postReq.Post()
 		if err != nil {
 			log.Fatal(err)
 		}
-		if saveFlag {
-			fmt.Println("Writing the files to nodes.yml")
-			writeToFile(file, completedData)
-		} else {
-			fmt.Println(completedData)
-		}
+		fmt.Println("Post Request Response", postResponse)
+
+		fmt.Println("Writing the files to nodes.yml")
+		writeToFile(file, completedData)
+		fmt.Println(completedData)
 	},
 }
 
@@ -208,7 +199,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	port := "701" + setIndex
 	path := "miner" + convertedIndex
 	description := ""
-	_ = core.CreateMpk(T, N, number, id)
+	mpk := core.CreateMpk(T, N, number, id)
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
@@ -221,6 +212,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 		Path:        path,
 		Description: description,
 		SetIndex:    uint(number),
+		MPK:         mpk,
 	}
 	return node, nodeStructure, nil
 
@@ -314,5 +306,4 @@ func init() {
 	generateKeys.MarkPersistentFlagRequired("signature_scheme")
 	generateKeys.PersistentFlags().Int("miners", 3, "Number of miners for which keys needs to be generated")
 	generateKeys.PersistentFlags().Int("sharders", 3, "Number of sharders for which keys needs to be generated")
-	generateKeys.PersistentFlags().Bool("save", false, "Save the generated key data in a file instead of printing")
 }
