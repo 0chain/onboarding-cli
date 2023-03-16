@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var setupMPKS = &cobra.Command{
+var sendShares = &cobra.Command{
 	Use:   "send-shares",
 	Short: "Generates shares and sends them",
 	Long:  "Generates the mpks, and responsible for sharding and sending them",
@@ -98,5 +98,5 @@ var setupMPKS = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(setupMPKS)
+	rootCmd.AddCommand(sendShares)
 }
