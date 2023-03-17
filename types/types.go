@@ -32,3 +32,9 @@ type ShareData struct {
 	FromMiner string `json:"from_miner"`
 	ToMiner   string `json:"to_miner"`
 }
+
+type SignData struct {
+	Sign      string `json:"sign"`
+	FromMiner string `json:"from_miner"`
+	ToMiner   string `json:"to_miner"`
+}

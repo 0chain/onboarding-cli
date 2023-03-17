@@ -35,8 +35,6 @@ func CreateMpk(t, n, setIndex int, minerID string) []string {
 		return nil
 	}
 
-	fmt.Println("no err")
-
 	return mpk
 }
 

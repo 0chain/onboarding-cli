@@ -2,16 +2,18 @@ package core
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
+	"onboarding-cli/types"
 
 	"github.com/0chain/gosdk/core/encryption"
 	"github.com/herumi/bls-go-binary/bls"
 )
 
 // SignMessages verifies the share and signs the share with the private key for every share sent to it by other miners
-func SignMessages(shares map[string]string, mpks map[string][]string, privKey string, currId string) map[string]string {
+func SignMessages(shares map[string]string, mpks map[string][]string, privKey string, currId string) []*types.SignData {
 
-	mp := make(map[string]string)
+	mp := make([]*types.SignData, 0)
 
 	for id, share := range shares {
 
@@ -19,10 +21,9 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 
 		if !ok {
 
-			log.Panicf("mpk not found for id %s", id)
+			fmt.Printf("PANIC:mpk not found for id %s\n", id)
 			continue
 		}
-
 		var jpk []PublicKey
 
 		for _, v := range mpk {
@@ -48,7 +49,7 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 		shareKey.SetHexString(share)
 
 		if !ValidateShare(jpk, shareKey, ComputeIDdkg(currId)) {
-			log.Panicf("invalid share for id %s", id)
+			fmt.Println("PANIC:share validation failed")
 			continue
 		}
 
@@ -56,7 +57,13 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 
 		sign := privateKey.Sign(message).GetHexString()
 
-		mp[id] = sign
+		signData := &types.SignData{
+			Sign:      sign,
+			FromMiner: currId,
+			ToMiner:   id,
+		}
+
+		mp = append(mp, signData)
 	}
 
 	return mp
