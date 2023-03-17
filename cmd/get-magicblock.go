@@ -26,7 +26,7 @@ var getMagicBlock = &cobra.Command{
 		}
 		respBody := getResponse.PostResponse.Body
 
-		path := "magicBlock.json"
+		path := "b0magicBlock.json"
 
 		if err := ioutil.WriteFile(path, []byte(respBody), 0644); err != nil {
 			panic(err)
