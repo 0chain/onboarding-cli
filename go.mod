@@ -1,11 +1,11 @@
 module onboarding-cli
 
-go 1.19
+go 1.18
 
 require (
 	github.com/0chain/errors v1.0.3
 	github.com/0chain/gosdk v1.8.13
-	github.com/herumi/bls-go-binary v1.0.1-0.20220103075647-4e46f4fe2af2
+	github.com/herumi/bls-go-binary v1.28.2
 	github.com/spf13/cobra v1.6.1
 )
 
@@ -20,4 +20,5 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a // indirect
 	golang.org/x/sys v0.1.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
