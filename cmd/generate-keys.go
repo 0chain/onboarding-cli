@@ -19,8 +19,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var T = 3
-var N = 66
+var T = 2
+var N = 3
 
 var generateKeys = &cobra.Command{
 	Use:   "generate-keys",
