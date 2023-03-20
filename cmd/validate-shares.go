@@ -45,7 +45,7 @@ var validateShares = &cobra.Command{
 		}
 
 		//Get all local miners
-		yfile, err := ioutil.ReadFile("nodes.yml")
+		yfile, err := ioutil.ReadFile("nodes.yaml")
 
 		if err != nil {
 			log.Fatal(err)

@@ -55,7 +55,7 @@ var generateKeys = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		file, err := os.OpenFile("nodes.yml", os.O_RDWR|os.O_CREATE, 0644)
+		file, err := os.OpenFile("nodes.yaml", os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -117,7 +117,7 @@ var generateKeys = &cobra.Command{
 		}
 		fmt.Println("Post Request Response", postResponse)
 
-		fmt.Println("Writing the files to nodes.yml")
+		fmt.Println("Writing the files to nodes.yaml")
 		writeToFile(file, completedData)
 		fmt.Println(completedData)
 	},
@@ -188,17 +188,17 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	var nodeStructure string
 
 	convertedIndex := strconv.Itoa(number)
-	setIndex := convertedIndex
+	setIndex := strconv.Itoa(number - 1)
 
 	if number < 10 {
 		convertedIndex = "0" + convertedIndex
 	}
 
-	n2nIp := "localhost"
-	publicIp := "localhost"
-	port := "701" + setIndex
+	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
+	publicIp := n2nIp
+	port := "7071"
 	path := "miner" + convertedIndex
-	description := ""
+	description := "as" + strconv.Itoa(number) + "@gmail.com"
 	mpk := core.CreateMpk(T, N, number, id)
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
@@ -211,7 +211,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 		PublicIp:    publicIp,
 		Path:        path,
 		Description: description,
-		SetIndex:    uint(number),
+		SetIndex:    uint(number - 1),
 		MPK:         mpk,
 	}
 	return node, nodeStructure, nil
@@ -259,19 +259,19 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 	var nodeStructure string
 
 	convertedIndex := strconv.Itoa(number)
-	setIndex := convertedIndex
+	setIndex := "0"
 
 	if number < 10 {
 		convertedIndex = "0" + convertedIndex
 	}
 
-	n2nIp := "localhost"
-	publicIp := "localhost"
-	port := "702" + setIndex
+	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
+	publicIp := n2nIp
+	port := "7171"
 	path := "sharder" + convertedIndex
-	description := ""
+	description := "as" + strconv.Itoa(number) + "@gmail.com"
 
-	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description)
+	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
 	node = types.Sharder{
 		ID:          id,
