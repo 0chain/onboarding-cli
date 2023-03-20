@@ -197,7 +197,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
 	publicIp := n2nIp
 	port := "7071"
-	path := "miner" + convertedIndex
+	path := "miner01"
 	description := "as" + strconv.Itoa(number) + "@gmail.com"
 	mpk := core.CreateMpk(T, N, number-1, id)
 
@@ -268,7 +268,7 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
 	publicIp := n2nIp
 	port := "7171"
-	path := "sharder" + convertedIndex
+	path := "sharder01"
 	description := "as" + strconv.Itoa(number) + "@gmail.com"
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
