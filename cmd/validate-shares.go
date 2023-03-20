@@ -177,5 +177,5 @@ func saveDKGSummary(dkg map[string]any, index int) error {
 }
 
 func getPath(index int) string {
-	return fmt.Sprintf("dkgSummary-%v_dkg.json", index)
+	return fmt.Sprintf("dkgSummary-%v_dkg.json", index+1)
 }
