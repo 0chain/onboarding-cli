@@ -143,7 +143,7 @@ func SendSignedMessages(currId string, privKey string, setIndex int, minerMap ma
 	}
 
 	mp := map[string]any{
-		"id":             setIndex,
+		"id":             "1",
 		"starting_round": 0,
 		"secret_shares":  shareDataMap,
 	}
