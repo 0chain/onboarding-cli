@@ -3,8 +3,10 @@ package cmd
 import (
 	"bufio"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
@@ -60,6 +62,12 @@ var generateKeys = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		err = os.MkdirAll("keys", os.ModePerm)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		minersData := "miners:\n"
 
 		minerNodes := []types.Miner{}
@@ -76,6 +84,11 @@ var generateKeys = &cobra.Command{
 			}
 			minersData += minerData
 			minerNodes = append(minerNodes, minerNode)
+			path := fmt.Sprintf("keys/b0mnode%d_keys.json", i)
+			err = saveWallet(path, wallet)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		shardersData := "sharders:\n"
@@ -93,6 +106,11 @@ var generateKeys = &cobra.Command{
 			}
 			shardersData += sharderData
 			sharderNodes = append(sharderNodes, sharderNode)
+			path := fmt.Sprintf("keys/b0snode%d_keys.json", i)
+			err = saveWallet(path, wallet)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		completedData := minersData + shardersData
@@ -187,12 +205,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 
 	var nodeStructure string
 
-	convertedIndex := strconv.Itoa(number)
 	setIndex := strconv.Itoa(number - 1)
-
-	if number < 10 {
-		convertedIndex = "0" + convertedIndex
-	}
 
 	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
 	publicIp := n2nIp
@@ -258,12 +271,7 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 
 	var nodeStructure string
 
-	convertedIndex := strconv.Itoa(number)
 	setIndex := "0"
-
-	if number < 10 {
-		convertedIndex = "0" + convertedIndex
-	}
 
 	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
 	publicIp := n2nIp
@@ -306,4 +314,13 @@ func init() {
 	generateKeys.MarkPersistentFlagRequired("signature_scheme")
 	generateKeys.PersistentFlags().Int("miners", 3, "Number of miners for which keys needs to be generated")
 	generateKeys.PersistentFlags().Int("sharders", 3, "Number of sharders for which keys needs to be generated")
+}
+
+func saveWallet(path string, wallet *zcncrypto.Wallet) error {
+
+	data, err := json.Marshal(wallet)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, data, 0644)
 }
