@@ -92,7 +92,7 @@ var validateShares = &cobra.Command{
 
 		}
 
-		//Send the signs to the server
+		// Send the signs to the server
 
 		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/sos", signs)
 		if err != nil {
@@ -132,16 +132,20 @@ func SendSignedMessages(currId string, privKey string, setIndex int, minerMap ma
 	}
 
 	shareMap := make(map[string]string)
+	shareDataMap := make(map[string]string)
 
 	for _, share := range shares.Shares {
 
+		partyId := core.ComputeIDdkg(share.FromMiner)
+
+		shareDataMap[partyId.GetHexString()] = share.Share
 		shareMap[share.FromMiner] = share.Share
 	}
 
 	mp := map[string]any{
 		"id":             setIndex,
 		"starting_round": 0,
-		"secret_shares":  shareMap,
+		"secret_shares":  shareDataMap,
 	}
 
 	if err := saveDKGSummary(mp, setIndex); err != nil {
