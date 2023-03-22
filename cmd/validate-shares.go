@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"onboarding-cli/config"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
 	"onboarding-cli/util"
@@ -23,7 +24,11 @@ var validateShares = &cobra.Command{
 	Long:  "Validates the shares, creates signatures or shares, sends them and then creates a dkg local file",
 	Run: func(cmd *cobra.Command, args []string) {
 		//Get all the miners from the server
-		getReq, err := util.NewHTTPGetRequest("http://localhost:3000/nodes")
+		server_url, err := config.Extract()
+		if err != nil {
+			log.Fatal(err)
+		}
+		getReq, err := util.NewHTTPGetRequest(server_url + "nodes")
 		if err != nil {
 			panic(err)
 		}
@@ -94,7 +99,7 @@ var validateShares = &cobra.Command{
 
 		// Send the signs to the server
 
-		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/sos", signs)
+		postReq, err := util.NewHTTPPostRequest(server_url+"sos", signs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,7 +119,12 @@ func init() {
 
 func SendSignedMessages(currId string, privKey string, setIndex int, minerMap map[string][]string) []*types.SignData {
 
-	getReq, err := util.NewHTTPGetRequest("http://localhost:3000/shares/" + currId)
+	server_url, err := config.Extract()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	getReq, err := util.NewHTTPGetRequest(server_url + "shares/" + currId)
 
 	if err != nil {
 		panic(err)

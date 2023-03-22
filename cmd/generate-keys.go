@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"onboarding-cli/config"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
 	"onboarding-cli/util"
@@ -35,6 +36,11 @@ var generateKeys = &cobra.Command{
 			flags = cmd.Flags()
 			err   error
 		)
+
+		server_url, err := config.Extract()
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		var clientSigScheme string
 
@@ -141,7 +147,7 @@ var generateKeys = &cobra.Command{
 			Sharders: sharderNodes,
 		}
 
-		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
+		postReq, err := util.NewHTTPPostRequest(server_url+"nodes", nodes)
 
 		if err != nil {
 			fmt.Println(err)
