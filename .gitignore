@@ -26,3 +26,4 @@ go.work
 output
 nodes.yaml
 *.json
+config.yaml
