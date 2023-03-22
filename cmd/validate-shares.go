@@ -45,7 +45,7 @@ var validateShares = &cobra.Command{
 		}
 
 		//Get all local miners
-		yfile, err := ioutil.ReadFile("nodes.yml")
+		yfile, err := ioutil.ReadFile("nodes.yaml")
 
 		if err != nil {
 			log.Fatal(err)
@@ -88,11 +88,11 @@ var validateShares = &cobra.Command{
 
 		for _, miner := range miners {
 
-			signs = append(signs, SendSignedMessages(miner.ID, miner.PrivKey, minerMap)...)
+			signs = append(signs, SendSignedMessages(miner.ID, miner.PrivKey, miner.SetIndex, minerMap)...)
 
 		}
 
-		//Send the signs to the server
+		// Send the signs to the server
 
 		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/sos", signs)
 		if err != nil {
@@ -112,7 +112,7 @@ func init() {
 	rootCmd.AddCommand(validateShares)
 }
 
-func SendSignedMessages(currId string, privKey string, minerMap map[string][]string) []*types.SignData {
+func SendSignedMessages(currId string, privKey string, setIndex int, minerMap map[string][]string) []*types.SignData {
 
 	getReq, err := util.NewHTTPGetRequest("http://localhost:3000/shares/" + currId)
 
@@ -125,17 +125,31 @@ func SendSignedMessages(currId string, privKey string, minerMap map[string][]str
 		log.Fatal(err)
 	}
 	respBody := getResponse.PostResponse.Body
-	var shares []types.ShareData
+	var shares types.ShareServer
 	err = json.Unmarshal([]byte(respBody), &shares)
 	if err != nil {
 		panic(err)
 	}
 
 	shareMap := make(map[string]string)
+	shareDataMap := make(map[string]string)
 
-	for _, share := range shares {
+	for _, share := range shares.Shares {
 
+		partyId := core.ComputeIDdkg(share.FromMiner)
+
+		shareDataMap[partyId.GetHexString()] = share.Share
 		shareMap[share.FromMiner] = share.Share
+	}
+
+	mp := map[string]any{
+		"id":             "1",
+		"starting_round": 0,
+		"secret_shares":  shareDataMap,
+	}
+
+	if err := saveDKGSummary(mp, setIndex); err != nil {
+		panic(err)
 	}
 
 	//Sign the shares
@@ -146,4 +160,26 @@ func SendSignedMessages(currId string, privKey string, minerMap map[string][]str
 
 	return data
 
+}
+
+func saveDKGSummary(dkg map[string]any, index int) error {
+
+	path := getPath(index)
+
+	var err error
+	var dkgData []byte
+	if dkgData, err = json.MarshalIndent(dkg, "", " "); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(path, dkgData, 0644); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func getPath(index int) string {
+	return fmt.Sprintf("dkgSummary-%v_dkg.json", index+1)
 }

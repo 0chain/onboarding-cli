@@ -3,8 +3,10 @@ package cmd
 import (
 	"bufio"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
@@ -19,8 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var T = 3
-var N = 66
+var T = 2
+var N = 3
 
 var generateKeys = &cobra.Command{
 	Use:   "generate-keys",
@@ -55,7 +57,13 @@ var generateKeys = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		file, err := os.OpenFile("nodes.yml", os.O_RDWR|os.O_CREATE, 0644)
+		file, err := os.OpenFile("nodes.yaml", os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = os.MkdirAll("keys", os.ModePerm)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -76,6 +84,11 @@ var generateKeys = &cobra.Command{
 			}
 			minersData += minerData
 			minerNodes = append(minerNodes, minerNode)
+			path := fmt.Sprintf("keys/b0mnode%d_keys.json", i)
+			err = saveWallet(path, wallet)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		shardersData := "sharders:\n"
@@ -93,6 +106,11 @@ var generateKeys = &cobra.Command{
 			}
 			shardersData += sharderData
 			sharderNodes = append(sharderNodes, sharderNode)
+			path := fmt.Sprintf("keys/b0snode%d_keys.json", i)
+			err = saveWallet(path, wallet)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		completedData := minersData + shardersData
@@ -117,7 +135,7 @@ var generateKeys = &cobra.Command{
 		}
 		fmt.Println("Post Request Response", postResponse)
 
-		fmt.Println("Writing the files to nodes.yml")
+		fmt.Println("Writing the files to nodes.yaml")
 		writeToFile(file, completedData)
 		fmt.Println(completedData)
 	},
@@ -187,19 +205,14 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 
 	var nodeStructure string
 
-	convertedIndex := strconv.Itoa(number)
-	setIndex := convertedIndex
+	setIndex := strconv.Itoa(number - 1)
 
-	if number < 10 {
-		convertedIndex = "0" + convertedIndex
-	}
-
-	n2nIp := "localhost"
-	publicIp := "localhost"
-	port := "701" + setIndex
-	path := "miner" + convertedIndex
-	description := ""
-	mpk := core.CreateMpk(T, N, number, id)
+	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
+	publicIp := n2nIp
+	port := "7071"
+	path := "miner01"
+	description := "as" + strconv.Itoa(number) + "@gmail.com"
+	mpk := core.CreateMpk(T, N, number-1, id)
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
@@ -211,7 +224,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 		PublicIp:    publicIp,
 		Path:        path,
 		Description: description,
-		SetIndex:    uint(number),
+		SetIndex:    uint(number - 1),
 		MPK:         mpk,
 	}
 	return node, nodeStructure, nil
@@ -258,20 +271,15 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 
 	var nodeStructure string
 
-	convertedIndex := strconv.Itoa(number)
-	setIndex := convertedIndex
+	setIndex := "0"
 
-	if number < 10 {
-		convertedIndex = "0" + convertedIndex
-	}
+	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
+	publicIp := n2nIp
+	port := "7171"
+	path := "sharder01"
+	description := "as" + strconv.Itoa(number) + "@gmail.com"
 
-	n2nIp := "localhost"
-	publicIp := "localhost"
-	port := "702" + setIndex
-	path := "sharder" + convertedIndex
-	description := ""
-
-	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description)
+	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
 	node = types.Sharder{
 		ID:          id,
@@ -306,4 +314,13 @@ func init() {
 	generateKeys.MarkPersistentFlagRequired("signature_scheme")
 	generateKeys.PersistentFlags().Int("miners", 3, "Number of miners for which keys needs to be generated")
 	generateKeys.PersistentFlags().Int("sharders", 3, "Number of sharders for which keys needs to be generated")
+}
+
+func saveWallet(path string, wallet *zcncrypto.Wallet) error {
+
+	data, err := json.Marshal(wallet)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, data, 0644)
 }

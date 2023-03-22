@@ -65,6 +65,7 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 			Sign:      sign,
 			FromMiner: currId,
 			ToMiner:   id,
+			Message:   message,
 		}
 
 		mp = append(mp, signData)
