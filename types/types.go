@@ -44,6 +44,9 @@ type ShareServer struct {
 	Shares []*ShareData `json:"shares"`
 }
 
-type ShareServer struct {
-	Shares []*ShareData `json:"shares"`
+type ConfigNodeData struct {
+	N2NIp       string `json:"n2n_ip" yaml:"n2n_ip"`
+	Port        string `json:"port" yaml:"port"`
+	PublicIp    string `json:"public_ip" yaml:"public_ip"`
+	Description string `json:"description" yaml:"description"`
 }

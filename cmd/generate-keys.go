@@ -19,6 +19,7 @@ import (
 	"github.com/0chain/gosdk/core/zcncrypto"
 	"github.com/herumi/bls-go-binary/bls"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var T = 2
@@ -47,6 +48,16 @@ var generateKeys = &cobra.Command{
 
 		var miners, sharders int
 
+		yfile, err := ioutil.ReadFile("config.yaml")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		configData := make(map[string][]types.ConfigNodeData)
+		err = yaml.Unmarshal(yfile, &configData)
+		minersConfigData := configData["miners"]
+		shardersConfigData := configData["sharders"]
+
 		miners, err = flags.GetInt("miners")
 		if err != nil {
 			log.Fatal(err)
@@ -55,6 +66,16 @@ var generateKeys = &cobra.Command{
 		sharders, err = flags.GetInt("sharders")
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if len(minersConfigData) != miners {
+			log.Fatal("Number of miners entered and miner data in config.yaml have mismatched length. Aborting")
+			return
+		}
+
+		if len(shardersConfigData) != sharders {
+			log.Fatal("Number of sharder entered and sharder data in config.yaml have mismatched length. Aborting")
+			return
 		}
 
 		file, err := os.OpenFile("nodes.yaml", os.O_RDWR|os.O_CREATE, 0644)
@@ -78,7 +99,7 @@ var generateKeys = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
-			minerNode, minerData, err := generateMinerNodeStructure(wallet, clientSigScheme, i)
+			minerNode, minerData, err := generateMinerNodeStructure(wallet, clientSigScheme, i, minersConfigData[i-1])
 			if err != nil {
 				panic(err)
 			}
@@ -100,7 +121,7 @@ var generateKeys = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
-			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i)
+			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i, shardersConfigData[i-1])
 			if err != nil {
 				panic(err)
 			}
@@ -165,7 +186,7 @@ func getWallet(scheme string) (wallet *zcncrypto.Wallet, err error) {
 
 // TODO: refactor miner and sharder structures to a single function later
 // TODO: Need to map the return type which was causing some complications
-func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Miner, details string, err error) {
+func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int, minerNodeData types.ConfigNodeData) (node types.Miner, details string, err error) {
 	if len(wallet.Keys) == 0 {
 		return types.Miner{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
@@ -207,11 +228,11 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 
 	setIndex := strconv.Itoa(number - 1)
 
-	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
-	publicIp := n2nIp
-	port := "7071"
+	n2nIp := minerNodeData.N2NIp
+	publicIp := minerNodeData.PublicIp
+	port := minerNodeData.Port
 	path := "miner01"
-	description := "as" + strconv.Itoa(number) + "@gmail.com"
+	description := minerNodeData.Description
 	mpk := core.CreateMpk(T, N, number-1, id)
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
@@ -231,7 +252,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 
 }
 
-func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Sharder, details string, err error) {
+func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int, sharderNodeData types.ConfigNodeData) (node types.Sharder, details string, err error) {
 	if len(wallet.Keys) == 0 {
 		return types.Sharder{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
@@ -273,11 +294,11 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 
 	setIndex := "0"
 
-	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
-	publicIp := n2nIp
-	port := "7171"
+	n2nIp := sharderNodeData.N2NIp
+	publicIp := sharderNodeData.PublicIp
+	port := sharderNodeData.Port
 	path := "sharder01"
-	description := "as" + strconv.Itoa(number) + "@gmail.com"
+	description := sharderNodeData.Description
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
