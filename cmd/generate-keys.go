@@ -107,8 +107,14 @@ var generateKeys = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		minersData := "miners:\n"
+		minersData := ""
+		if miners > 0 {
+			minersData = "miners:\n"
+			err = os.MkdirAll("output", os.ModePerm)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 		minerNodes := []types.Miner{}
 
@@ -253,6 +259,10 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	path := "miner01"
 	description := minerNodeData.Description
 	mpk := core.CreateMpk(T, N, number-1, id)
+
+	if mpk == nil {
+		log.Fatal("mpk could not be saved")
+	}
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 

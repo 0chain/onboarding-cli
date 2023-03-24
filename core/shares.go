@@ -22,7 +22,7 @@ func CreateShares(minerIds []string, setIndex int, currId string) []*types.Share
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func CreateShares(minerIds []string, setIndex int, currId string) []*types.Share
 
 	err = json.Unmarshal(data, &dkg)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return nil
 	}
 
@@ -50,7 +50,7 @@ func CreateShares(minerIds []string, setIndex int, currId string) []*types.Share
 		otherPartyId := ComputeIDdkg(id)
 		share, err := ComputeDKGKeyShare(msk, otherPartyId)
 		if err != nil {
-			log.Panic(err)
+			log.Fatal(err)
 		}
 
 		shareData := &types.ShareData{

@@ -31,7 +31,6 @@ func CreateMpk(t, n, setIndex int, minerID string) []string {
 	err := saveDKG(mp, setIndex)
 
 	if err != nil {
-		fmt.Println(err)
 		return nil
 	}
 
