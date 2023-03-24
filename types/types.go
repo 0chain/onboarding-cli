@@ -43,7 +43,3 @@ type SignData struct {
 type ShareServer struct {
 	Shares []*ShareData `json:"shares"`
 }
-
-type ShareServer struct {
-	Shares []*ShareData `json:"shares"`
-}
