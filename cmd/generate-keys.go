@@ -138,6 +138,9 @@ var generateKeys = &cobra.Command{
 		}
 
 		shardersData := "sharders:\n"
+		if sharders == 0 {
+			shardersData = ""
+		}
 		sharderNodes := []types.Sharder{}
 
 		for i := 1; i <= sharders; i++ {
