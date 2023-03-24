@@ -9,31 +9,31 @@ This repository contains the code for Magic Block CLI
 
 ```yaml
 miners:
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 5000
-  description: random description
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 5000
-  description: random description
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 5000
-  description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 5000
+    description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 5000
+    description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 5000
+    description: random description
 sharders:
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 6000
-  description: random description
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 6000
-  description: random description
-- n2n_ip: localhost
-  public_ip: localhost
-  port: 6000
-  description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 6000
+    description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 6000
+    description: random description
+  - n2n_ip: localhost
+    public_ip: localhost
+    port: 6000
+    description: random description
 ```
 
 ## Commands
@@ -44,7 +44,7 @@ sharders:
 go run main.go generate-keys --signature_scheme bls0chain --miners NO_OF_MINERS --sharders NO_OF_SHARDERS
 ```
 
-**Note:** NO_OF_MINERS and NO_OF_SHARDERS passed must have same length as in the `config.yaml` file.
+**Note:** NO_OF_MINERS and NO_OF_SHARDERS passed must have same length as in the `config.yaml` file and if u want to overwrite existing nodes and wallet files use `--overwrite` flag.
 
 - To create and send shares to the server
 

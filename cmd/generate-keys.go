@@ -52,6 +52,16 @@ var generateKeys = &cobra.Command{
 			log.Fatal("Signature Scheme can only take either bls0chain or ed25519")
 		}
 
+		overwrite, _ := flags.GetBool("overwrite")
+
+		if !overwrite {
+
+			if _, err := os.Stat("nodes.yaml"); err == nil || !os.IsNotExist(err) {
+				// some nodes exists
+				log.Fatal("nodes.yaml already exists. Aborting please delete the file or provide --overwrite flag and try again")
+			}
+		}
+
 		var miners, sharders int
 
 		yfile, err := ioutil.ReadFile("config.yaml")
@@ -61,6 +71,9 @@ var generateKeys = &cobra.Command{
 
 		configData := make(map[string][]types.ConfigNodeData)
 		err = yaml.Unmarshal(yfile, &configData)
+		if err != nil {
+			log.Fatal(err)
+		}
 		minersConfigData := configData["miners"]
 		shardersConfigData := configData["sharders"]
 
@@ -341,6 +354,7 @@ func init() {
 	generateKeys.MarkPersistentFlagRequired("signature_scheme")
 	generateKeys.PersistentFlags().Int("miners", 3, "Number of miners for which keys needs to be generated")
 	generateKeys.PersistentFlags().Int("sharders", 3, "Number of sharders for which keys needs to be generated")
+	generateKeys.PersistentFlags().Bool("overwrite", false, "Overwrite existing nodes.yaml file")
 }
 
 func saveWallet(path string, wallet *zcncrypto.Wallet) error {
