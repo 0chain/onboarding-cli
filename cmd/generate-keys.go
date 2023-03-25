@@ -172,12 +172,9 @@ var generateKeys = &cobra.Command{
 		postReq, err := util.NewHTTPPostRequest(server_url+"nodes", nodes)
 
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 
-		if err != nil {
-			panic(err)
-		}
 		postResponse, err := postReq.Post()
 		if err != nil {
 			log.Fatal(err)
