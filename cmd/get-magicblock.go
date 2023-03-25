@@ -24,6 +24,11 @@ var getMagicBlock = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		if getResponse.PostResponse.StatusCode != 200 {
+			log.Fatal("Error while getting magic block", getResponse.PostResponse.Body)
+		}
+
 		respBody := getResponse.PostResponse.Body
 
 		path := "b0magicBlock.json"

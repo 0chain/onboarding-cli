@@ -24,5 +24,6 @@ go.work
 .idea
 
 output
-nodes.yaml
+
 *.json
+*.yaml
