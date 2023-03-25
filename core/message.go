@@ -15,6 +15,18 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 
 	mp := make([]*types.SignData, 0)
 
+	var privateKey bls.SecretKey
+
+	privateKeyBytes, err := hex.DecodeString(privKey)
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	if err := privateKey.SetLittleEndian(privateKeyBytes); err != nil {
+		log.Panic(err)
+	}
+
 	for id, share := range shares {
 
 		if currId == id {
@@ -34,18 +46,6 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 			var pk PublicKey
 			pk.SetHexString(v)
 			jpk = append(jpk, pk)
-		}
-
-		var privateKey bls.SecretKey
-
-		privateKeyBytes, err := hex.DecodeString(privKey)
-
-		if err != nil {
-			log.Panic(err)
-		}
-
-		if err := privateKey.SetLittleEndian(privateKeyBytes); err != nil {
-			log.Panic(err)
 		}
 
 		var shareKey bls.SecretKey
