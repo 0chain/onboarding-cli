@@ -101,6 +101,11 @@ var generateKeys = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		err = os.RemoveAll("keys")
+
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		err = os.MkdirAll("keys", os.ModePerm)
 
@@ -277,6 +282,18 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 		SetIndex:    uint(number - 1),
 		MPK:         mpk,
 	}
+
+	filePath := fmt.Sprintf("keys/b0mnode%d_keys.txt", number)
+
+	val := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n", pub, privKey, n2nIp, publicIp, port)
+	data := []byte(val)
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return node, nodeStructure, nil
 
 }
@@ -340,6 +357,18 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 		Path:        path,
 		Description: description,
 	}
+
+	filePath := fmt.Sprintf("keys/b0snode%d_keys.txt", number)
+
+	val := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n", pub, privKey, n2nIp, publicIp, port)
+	data := []byte(val)
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return node, nodeStructure, nil
 
 }
