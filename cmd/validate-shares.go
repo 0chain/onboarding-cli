@@ -142,24 +142,27 @@ func SendSignedMessages(currId string, privKey string, setIndex int, pubKey stri
 		log.Fatal(err)
 	}
 
-	hashData := fmt.Sprintf("%s%s", currId, pubKey)
-
+	hashData := fmt.Sprintf("%v%v", currId, pubKey)
 	hash := encryption.Hash(hashData)
-
-	signature := privateKey.Sign(hash).GetHexString()
-
-	fmt.Println("Signature", signature)
+	signature := privateKey.Sign(hash).SerializeToHexStr()
 
 	getReq, err := util.NewHTTPGetRequest(server_url + "shares/" + currId)
-
 	if err != nil {
 		panic(err)
 	}
 
+	headers := map[string]string{"X-App-Miner-ID": currId, "X-App-Public-Key": pubKey, "X-App-Client-Signature": signature}
+
+	getReq.SetHeaders(headers)
 	getResponse, err := getReq.Get()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if getResponse.StatusCode != 200 {
+		log.Fatal("Couldn't validate shares")
+	}
+
 	respBody := getResponse.PostResponse.Body
 	var shares types.ShareServer
 	err = json.Unmarshal([]byte(respBody), &shares)
