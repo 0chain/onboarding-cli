@@ -147,6 +147,12 @@ func NewHTTPPostRequest(url string, data interface{}) (*PostRequest, error) {
 	return pr, nil
 }
 
+func (r *GetRequest) SetHeaders(headers map[string]string) {
+	for k, v := range headers {
+		r.req.Header.Set(k, v)
+	}
+}
+
 func (r *GetRequest) Get() (*GetResponse, error) {
 	response := &GetResponse{}
 	presp, err := r.Post()
