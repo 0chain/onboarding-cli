@@ -29,10 +29,6 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 
 	for id, share := range shares {
 
-		if currId == id {
-			continue
-		}
-
 		mpk, ok := mpks[id]
 
 		if !ok {
