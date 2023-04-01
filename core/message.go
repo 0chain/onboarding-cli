@@ -55,7 +55,7 @@ func SignMessages(shares map[string]string, mpks map[string][]string, privKey st
 
 		message := encryption.Hash(shareKey.GetHexString())
 
-		sign := privateKey.Sign(message).GetHexString()
+		sign := privateKey.Sign(message).SerializeToHexStr()
 
 		signData := &types.SignData{
 			Sign:      sign,
