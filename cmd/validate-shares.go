@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,8 @@ import (
 	"onboarding-cli/types"
 	"onboarding-cli/util"
 
+	"github.com/0chain/gosdk/core/encryption"
+	"github.com/herumi/bls-go-binary/bls"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -68,6 +71,7 @@ var validateShares = &cobra.Command{
 			ID       string
 			SetIndex int
 			PrivKey  string
+			PubKey   string
 		}
 
 		for _, miner := range data["miners"].([]interface{}) {
@@ -77,12 +81,14 @@ var validateShares = &cobra.Command{
 			id := minerData["id"]
 			setIndex := minerData["set_index"]
 			privKey := minerData["private_key"]
+			pubKey := minerData["public_key"]
 
 			miner := &struct {
 				ID       string
 				SetIndex int
 				PrivKey  string
-			}{id.(string), int(setIndex.(int)), privKey.(string)}
+				PubKey   string
+			}{id.(string), int(setIndex.(int)), privKey.(string), pubKey.(string)}
 
 			miners = append(miners, miner)
 		}
@@ -93,7 +99,7 @@ var validateShares = &cobra.Command{
 
 		for _, miner := range miners {
 
-			signs = append(signs, SendSignedMessages(miner.ID, miner.PrivKey, miner.SetIndex, minerMap)...)
+			signs = append(signs, SendSignedMessages(miner.ID, miner.PrivKey, miner.SetIndex, miner.PubKey, minerMap)...)
 
 		}
 
@@ -117,23 +123,46 @@ func init() {
 	rootCmd.AddCommand(validateShares)
 }
 
-func SendSignedMessages(currId string, privKey string, setIndex int, minerMap map[string][]string) []*types.SignData {
+func SendSignedMessages(currId string, privKey string, setIndex int, pubKey string, minerMap map[string][]string) []*types.SignData {
 
 	server_url, err := config.Extract()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	getReq, err := util.NewHTTPGetRequest(server_url + "shares/" + currId)
+	var privateKey bls.SecretKey
 
+	privateKeyBytes, err := hex.DecodeString(privKey)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := privateKey.SetLittleEndian(privateKeyBytes); err != nil {
+		log.Fatal(err)
+	}
+
+	hashData := fmt.Sprintf("%v%v", currId, pubKey)
+	hash := encryption.Hash(hashData)
+	signature := privateKey.Sign(hash).SerializeToHexStr()
+
+	getReq, err := util.NewHTTPGetRequest(server_url + "shares/" + currId)
 	if err != nil {
 		panic(err)
 	}
 
+	headers := map[string]string{"X-App-Miner-ID": currId, "X-App-Public-Key": pubKey, "X-App-Client-Signature": signature}
+
+	getReq.SetHeaders(headers)
 	getResponse, err := getReq.Get()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if getResponse.StatusCode != 200 {
+		log.Fatal("Couldn't validate shares")
+	}
+
 	respBody := getResponse.PostResponse.Body
 	var shares types.ShareServer
 	err = json.Unmarshal([]byte(respBody), &shares)
