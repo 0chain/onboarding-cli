@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"onboarding-cli/config"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
 	"onboarding-cli/util"
@@ -19,6 +20,7 @@ import (
 	"github.com/0chain/gosdk/core/zcncrypto"
 	"github.com/herumi/bls-go-binary/bls"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var T = 2
@@ -35,6 +37,11 @@ var generateKeys = &cobra.Command{
 			err   error
 		)
 
+		server_url, err := config.Extract()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		var clientSigScheme string
 
 		clientSigScheme, err = flags.GetString("signature_scheme")
@@ -45,7 +52,30 @@ var generateKeys = &cobra.Command{
 			log.Fatal("Signature Scheme can only take either bls0chain or ed25519")
 		}
 
+		overwrite, _ := flags.GetBool("overwrite")
+
+		if !overwrite {
+
+			if _, err := os.Stat("nodes.yaml"); err == nil || !os.IsNotExist(err) {
+				// some nodes exists
+				log.Fatal("nodes.yaml already exists. Aborting please delete the file or provide --overwrite flag and try again")
+			}
+		}
+
 		var miners, sharders int
+
+		yfile, err := ioutil.ReadFile("config.yaml")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		configData := make(map[string][]types.ConfigNodeData)
+		err = yaml.Unmarshal(yfile, &configData)
+		if err != nil {
+			log.Fatal(err)
+		}
+		minersConfigData := configData["miners"]
+		shardersConfigData := configData["sharders"]
 
 		miners, err = flags.GetInt("miners")
 		if err != nil {
@@ -57,7 +87,22 @@ var generateKeys = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		if len(minersConfigData) != miners {
+			log.Fatal("Number of miners entered and miner data in config.yaml have mismatched length. Aborting")
+			return
+		}
+
+		if len(shardersConfigData) != sharders {
+			log.Fatal("Number of sharder entered and sharder data in config.yaml have mismatched length. Aborting")
+			return
+		}
+
 		file, err := os.OpenFile("nodes.yaml", os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = os.RemoveAll("keys")
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -67,8 +112,14 @@ var generateKeys = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		minersData := "miners:\n"
+		minersData := ""
+		if miners > 0 {
+			minersData = "miners:\n"
+			err = os.MkdirAll("output", os.ModePerm)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 		minerNodes := []types.Miner{}
 
@@ -78,7 +129,7 @@ var generateKeys = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
-			minerNode, minerData, err := generateMinerNodeStructure(wallet, clientSigScheme, i)
+			minerNode, minerData, err := generateMinerNodeStructure(wallet, clientSigScheme, i, minersConfigData[i-1])
 			if err != nil {
 				panic(err)
 			}
@@ -92,6 +143,9 @@ var generateKeys = &cobra.Command{
 		}
 
 		shardersData := "sharders:\n"
+		if sharders == 0 {
+			shardersData = ""
+		}
 		sharderNodes := []types.Sharder{}
 
 		for i := 1; i <= sharders; i++ {
@@ -100,7 +154,7 @@ var generateKeys = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
-			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i)
+			sharderNode, sharderData, err := generateSharderNodeStructure(wallet, clientSigScheme, i, shardersConfigData[i-1])
 			if err != nil {
 				panic(err)
 			}
@@ -120,15 +174,12 @@ var generateKeys = &cobra.Command{
 			Sharders: sharderNodes,
 		}
 
-		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/nodes", nodes)
+		postReq, err := util.NewHTTPPostRequest(server_url+"nodes", nodes)
 
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 
-		if err != nil {
-			panic(err)
-		}
 		postResponse, err := postReq.Post()
 		if err != nil {
 			log.Fatal(err)
@@ -165,7 +216,7 @@ func getWallet(scheme string) (wallet *zcncrypto.Wallet, err error) {
 
 // TODO: refactor miner and sharder structures to a single function later
 // TODO: Need to map the return type which was causing some complications
-func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Miner, details string, err error) {
+func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int, minerNodeData types.ConfigNodeData) (node types.Miner, details string, err error) {
 	if len(wallet.Keys) == 0 {
 		return types.Miner{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
@@ -207,12 +258,16 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 
 	setIndex := strconv.Itoa(number - 1)
 
-	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
-	publicIp := n2nIp
-	port := "7071"
+	n2nIp := minerNodeData.N2NIp
+	publicIp := minerNodeData.PublicIp
+	port := minerNodeData.Port
 	path := "miner01"
-	description := "as" + strconv.Itoa(number) + "@gmail.com"
+	description := minerNodeData.Description
 	mpk := core.CreateMpk(T, N, number-1, id)
+
+	if mpk == nil {
+		log.Fatal("mpk could not be saved")
+	}
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
@@ -227,11 +282,23 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 		SetIndex:    uint(number - 1),
 		MPK:         mpk,
 	}
+
+	filePath := fmt.Sprintf("keys/b0mnode%d_keys.txt", number)
+
+	val := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n", pub, privKey, n2nIp, publicIp, port)
+	data := []byte(val)
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return node, nodeStructure, nil
 
 }
 
-func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int) (node types.Sharder, details string, err error) {
+func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, number int, sharderNodeData types.ConfigNodeData) (node types.Sharder, details string, err error) {
 	if len(wallet.Keys) == 0 {
 		return types.Sharder{}, "", errors.New("key-gen", "Writing keys failed. Empty wallet.")
 	}
@@ -273,11 +340,11 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 
 	setIndex := "0"
 
-	n2nIp := "as" + strconv.Itoa(number) + ".testnet-0chain.net"
-	publicIp := n2nIp
-	port := "7171"
+	n2nIp := sharderNodeData.N2NIp
+	publicIp := sharderNodeData.PublicIp
+	port := sharderNodeData.Port
 	path := "sharder01"
-	description := "as" + strconv.Itoa(number) + "@gmail.com"
+	description := sharderNodeData.Description
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
 
@@ -290,6 +357,18 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 		Path:        path,
 		Description: description,
 	}
+
+	filePath := fmt.Sprintf("keys/b0snode%d_keys.txt", number)
+
+	val := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n", pub, privKey, n2nIp, publicIp, port)
+	data := []byte(val)
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return node, nodeStructure, nil
 
 }
@@ -314,6 +393,7 @@ func init() {
 	generateKeys.MarkPersistentFlagRequired("signature_scheme")
 	generateKeys.PersistentFlags().Int("miners", 3, "Number of miners for which keys needs to be generated")
 	generateKeys.PersistentFlags().Int("sharders", 3, "Number of sharders for which keys needs to be generated")
+	generateKeys.PersistentFlags().Bool("overwrite", false, "Overwrite existing nodes.yaml file")
 }
 
 func saveWallet(path string, wallet *zcncrypto.Wallet) error {

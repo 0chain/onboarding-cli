@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"onboarding-cli/config"
 	"onboarding-cli/core"
 	"onboarding-cli/types"
 	"onboarding-cli/util"
@@ -19,8 +20,12 @@ var sendShares = &cobra.Command{
 	Long:  "Generates the mpks, and responsible for sharding and sending them",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Send Shares called")
+		server_url, err := config.Extract()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		getReq, err := util.NewHTTPGetRequest("http://localhost:3000/nodes")
+		getReq, err := util.NewHTTPGetRequest(server_url + "nodes")
 		if err != nil {
 			panic(err)
 		}
@@ -82,7 +87,7 @@ var sendShares = &cobra.Command{
 				miner.ID)...)
 		}
 
-		postReq, err := util.NewHTTPPostRequest("http://localhost:3000/mpks", shares)
+		postReq, err := util.NewHTTPPostRequest(server_url+"mpks", shares)
 
 		if err != nil {
 			log.Fatal(err)

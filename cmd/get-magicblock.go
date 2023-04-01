@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"onboarding-cli/config"
 	"onboarding-cli/util"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,12 @@ var getMagicBlock = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Get magic block called")
 
-		getReq, err := util.NewHTTPGetRequest("http://localhost:3000/magicblock")
+		server_url, err := config.Extract()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		getReq, err := util.NewHTTPGetRequest(server_url + "magicblock")
 		if err != nil {
 			panic(err)
 		}
