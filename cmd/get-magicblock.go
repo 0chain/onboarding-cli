@@ -31,8 +31,9 @@ var getMagicBlock = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if getResponse.PostResponse.StatusCode != 200 {
-			log.Fatal("Error while getting magic block", getResponse.PostResponse.Body)
+		_, err = getResponse.CheckStatusCode()
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		respBody := getResponse.PostResponse.Body

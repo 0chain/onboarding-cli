@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/0chain/errors"
 )
 
 type GetRequest struct {
@@ -181,4 +183,34 @@ func (r *PostRequest) Post() (*PostResponse, error) {
 		return nil
 	})
 	return result, err
+}
+
+func (r *PostResponse) CheckStatusCode() (int, error) {
+	statusCode := r.StatusCode
+
+	if statusCode == 200 || statusCode == 201 {
+		return statusCode, nil
+	}
+
+	if statusCode >= 500 {
+		return statusCode, errors.New("", "Some interal error ocurred. Please try again later")
+	}
+
+	if statusCode == 400 {
+		return statusCode, errors.New("", "Bad Request")
+	}
+
+	if statusCode == 401 {
+		return statusCode, errors.New("", "Unauthorized")
+	}
+
+	if statusCode == 403 {
+		return statusCode, errors.New("", "Forbidden")
+	}
+
+	if statusCode == 404 {
+		return statusCode, errors.New("", "Not Found")
+	}
+
+	return statusCode, nil
 }

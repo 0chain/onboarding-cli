@@ -33,6 +33,12 @@ var sendShares = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		_, err = getResponse.CheckStatusCode()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		respBody := getResponse.PostResponse.Body
 		var nodes types.Nodes
 		err = json.Unmarshal([]byte(respBody), &nodes)
@@ -94,6 +100,11 @@ var sendShares = &cobra.Command{
 		}
 
 		postResponse, err := postReq.Post()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = postResponse.CheckStatusCode()
 		if err != nil {
 			log.Fatal(err)
 		}
