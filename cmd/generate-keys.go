@@ -58,7 +58,7 @@ var generateKeys = &cobra.Command{
 
 			if _, err := os.Stat("nodes.yaml"); err == nil || !os.IsNotExist(err) {
 				// some nodes exists
-				log.Fatal("nodes.yaml already exists. Aborting please delete the file or provide --overwrite flag and try again")
+				log.Fatal("nodes.yaml already exists aborting ")
 			}
 		}
 
