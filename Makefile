@@ -1,4 +1,4 @@
-BINARY_NAME=viewchange
+BINARY_NAME=keygen
 
 ## build: Build binary
 build:
