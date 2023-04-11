@@ -39,6 +39,10 @@ var validateShares = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		_, err = getResponse.CheckStatusCode()
+		if err != nil {
+			log.Fatal(err)
+		}
 		respBody := getResponse.PostResponse.Body
 		var nodes types.Nodes
 		err = json.Unmarshal([]byte(respBody), &nodes)
@@ -114,6 +118,11 @@ var validateShares = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		_, err = postResponse.CheckStatusCode()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Println("Post Request Response", postResponse)
 
 	},
@@ -159,8 +168,10 @@ func SendSignedMessages(currId string, privKey string, setIndex int, pubKey stri
 		log.Fatal(err)
 	}
 
-	if getResponse.StatusCode != 200 {
-		log.Fatal("Couldn't validate shares")
+	_, err = getResponse.CheckStatusCode()
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	respBody := getResponse.PostResponse.Body

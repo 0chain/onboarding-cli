@@ -184,6 +184,12 @@ var generateKeys = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		_, err = postResponse.CheckStatusCode()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Println("Post Request Response", postResponse)
 
 		fmt.Println("Writing the files to nodes.yaml")
