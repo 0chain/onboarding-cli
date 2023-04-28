@@ -50,3 +50,8 @@ type ConfigNodeData struct {
 	PublicIp    string `json:"public_ip" yaml:"public_ip"`
 	Description string `json:"description" yaml:"description"`
 }
+
+type InitialStateData struct {
+	ID     string `json:"id" yaml:"id"`
+	Tokens int64  `json:"tokens" yaml:"tokens"`
+}
