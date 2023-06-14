@@ -18,6 +18,11 @@ jobs:
         with:
           go-version: '1.18' # The Go version to download (if necessary) and use.
 
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt -y install build-essential nghttp2 libnghttp2-dev libssl-dev make
+
       - name: Checkout
         uses: actions/checkout@v2
       
