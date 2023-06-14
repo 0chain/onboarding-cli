@@ -41,10 +41,10 @@ jobs:
           fi
 
       - name: Install
-        run: make install
+        run: make build
 
       - name: Zip release
-        run: tar -czvf keygen-linux.tar.gz ./keygen
+        run: tar -czvf keygen-linux.tar.gz ./bin/keygen
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
