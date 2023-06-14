@@ -18,6 +18,11 @@ jobs:
         with:
           go-version: '1.18' # The Go version to download (if necessary) and use.
 
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt -y install build-essential nghttp2 libnghttp2-dev libssl-dev make
+
       - name: Checkout
         uses: actions/checkout@v2
       
@@ -36,10 +41,10 @@ jobs:
           fi
 
       - name: Install
-        run: make install
+        run: make build
 
       - name: Zip release
-        run: tar -czvf keygen-linux.tar.gz ./keygen
+        run: tar -czvf keygen-linux.tar.gz ./bin/keygen
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
