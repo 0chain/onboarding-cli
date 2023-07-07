@@ -23,8 +23,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var T = 2
-var N = 3
+// var T = 2
+// var N = 3
 
 var generateKeys = &cobra.Command{
 	Use:   "generate-keys",
@@ -273,7 +273,7 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	port := minerNodeData.Port
 	path := "miner" + minerNum
 	description := minerNodeData.Description
-	mpk := core.CreateMpk(T, N, number-1, id)
+	mpk := core.CreateMpk(config.T, config.N, number-1, id)
 
 	if mpk == nil {
 		log.Fatal("mpk could not be saved")
