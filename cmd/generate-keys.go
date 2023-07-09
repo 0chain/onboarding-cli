@@ -23,8 +23,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var T = 2
-var N = 3
+// var T = 2
+// var N = 3
 
 var generateKeys = &cobra.Command{
 	Use:   "generate-keys",
@@ -263,13 +263,17 @@ func generateMinerNodeStructure(wallet *zcncrypto.Wallet, scheme string, number 
 	var nodeStructure string
 
 	setIndex := strconv.Itoa(number - 1)
+	minerNum := strconv.Itoa(number)
+	if number < 10 {
+		minerNum = "0" + minerNum
+	}
 
 	n2nIp := minerNodeData.N2NIp
 	publicIp := minerNodeData.PublicIp
 	port := minerNodeData.Port
-	path := "miner01"
+	path := "miner" + minerNum
 	description := minerNodeData.Description
-	mpk := core.CreateMpk(T, N, number-1, id)
+	mpk := core.CreateMpk(config.T, config.N, number-1, id)
 
 	if mpk == nil {
 		log.Fatal("mpk could not be saved")
@@ -345,11 +349,15 @@ func generateSharderNodeStructure(wallet *zcncrypto.Wallet, scheme string, numbe
 	var nodeStructure string
 
 	setIndex := "0"
+	sharderNum := strconv.Itoa(number)
+	if number < 10 {
+		sharderNum = "0" + sharderNum
+	}
 
 	n2nIp := sharderNodeData.N2NIp
 	publicIp := sharderNodeData.PublicIp
 	port := sharderNodeData.Port
-	path := "sharder01"
+	path := "sharder" + sharderNum
 	description := sharderNodeData.Description
 
 	nodeStructure = fmt.Sprintf("- id: %s\n  public_key: %s\n  private_key: %s\n  n2n_ip: %s\n  public_ip: %s\n  port: %s\n  path: %s\n  description: %s\n  set_index: %s\n", id, pub, sec, n2nIp, publicIp, port, path, description, setIndex)
